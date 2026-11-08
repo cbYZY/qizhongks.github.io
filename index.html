@@ -234,13 +234,23 @@
     .guestbook { padding: 20px 18px; }
     .gb-form { grid-template-columns: 1fr; }
     .gb-send { width: 100%; }
-    .mats { grid-template-columns: 1fr; }
+    .mats-grid { grid-template-columns: 1fr; }
+    .mats-note { display: none; }
   }
 
   .gb-captcha { display: flex; justify-content: center; margin-top: 12px; }
 
   /* ---------- 素材下载 ---------- */
-  .mats { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 24px; }
+  .mats { margin-top: 34px; }
+  .mats-head { display: flex; align-items: baseline; justify-content: space-between; gap: 14px; margin-bottom: 14px; flex-wrap: wrap; }
+  .mats-title { display: flex; align-items: center; gap: 10px; font-size: 12px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--faint); }
+  .mats-title .tick { width: 3px; height: 12px; border-radius: 2px; background: var(--blue); }
+  .mats-note { font-size: 12.5px; color: var(--muted); letter-spacing: 0.02em; }
+  .mats-note b { color: var(--blue); font-weight: 650; }
+  .mats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .mats-tips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+  .mats-tip { font-size: 12px; color: var(--muted); background: rgba(77,107,254,0.06); border: 1px dashed rgba(77,107,254,0.3); border-radius: 999px; padding: 6px 12px; letter-spacing: 0.02em; }
+  .mats-tip b { color: var(--blue); font-weight: 650; }
   .mat-card {
     position: relative; display: block; text-decoration: none; overflow: hidden;
     background: rgba(255,255,255,0.6); border: 1px solid rgba(255,255,255,0.88);
@@ -370,6 +380,11 @@
     <div class="tb-note" id="syncDetail">正在请求 NowAPI 北京时间校准接口…</div>
 
     <section class="mats">
+      <div class="mats-head">
+        <div class="mats-title"><span class="tick"></span>素材下载 · 资源分享</div>
+        <div class="mats-note">123 云盘 · 新用户即送 <b>2TB 免费存储空间</b></div>
+      </div>
+      <div class="mats-grid">
       <a class="mat-card" href="https://1858374084.share.123pan.cn/123pan/CjW7vd-wPbKA" target="_blank" rel="noopener noreferrer">
         <div class="mat-cover" style="background-image:url('https://1858374084.cdn.123clouddisk.com/1858374084/40170190')"></div>
         <div class="mat-info"><span class="mat-name">研学素材</span><span class="mat-size">25.98 GB</span></div>
@@ -380,6 +395,12 @@
         <div class="mat-info"><span class="mat-name">校运会素材</span><span class="mat-size">19.05 GB</span></div>
         <div class="mat-foot"><span class="mat-sub">123 云盘 · 打包下载</span><span class="mat-go">获取</span></div>
       </a>
+      </div>
+      <div class="mats-tips">
+        <span class="mats-tip">🎁 注册即送 <b>2TB</b> 免费空间</span>
+        <span class="mats-tip">⚡ 点「获取」后可 <b>一键转存</b> 到我的云盘再慢慢下载</span>
+        <span class="mats-tip">📱 手机装 123 云盘 App 也能直接播放 / 下载</span>
+      </div>
     </section>
 
     <section class="guestbook">
