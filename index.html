@@ -234,7 +234,34 @@
     .guestbook { padding: 20px 18px; }
     .gb-form { grid-template-columns: 1fr; }
     .gb-send { width: 100%; }
+    .mats { grid-template-columns: 1fr; }
   }
+
+  .gb-captcha { display: flex; justify-content: center; margin-top: 12px; }
+
+  /* ---------- 素材下载 ---------- */
+  .mats { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 24px; }
+  .mat-card {
+    position: relative; display: block; text-decoration: none; overflow: hidden;
+    background: rgba(255,255,255,0.6); border: 1px solid rgba(255,255,255,0.88);
+    border-radius: 20px; backdrop-filter: blur(22px) saturate(160%);
+    -webkit-backdrop-filter: blur(22px) saturate(160%);
+    box-shadow: 0 18px 44px -28px rgba(45,80,170,0.34);
+    transition: transform 0.28s cubic-bezier(0.22,1,0.36,1), box-shadow 0.28s ease;
+  }
+  .mat-card:hover { transform: translateY(-4px); box-shadow: 0 26px 56px -26px rgba(45,80,170,0.4); }
+  .mat-cover {
+    height: 128px; background-size: cover; background-position: center; background-color: #dfe7f6;
+    border-bottom: 1px solid rgba(255,255,255,0.7);
+  }
+  .mat-info { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; padding: 14px 16px 6px; }
+  .mat-name { font-size: 15.5px; font-weight: 650; color: var(--ink); letter-spacing: -0.01em; }
+  .mat-size { font-size: 12.5px; font-weight: 650; color: var(--blue); background: rgba(77,107,254,0.08); border: 1px solid rgba(77,107,254,0.18); border-radius: 999px; padding: 4px 10px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .mat-foot { display: flex; align-items: center; justify-content: space-between; padding: 4px 16px 15px; }
+  .mat-sub { font-size: 12px; color: var(--faint); }
+  .mat-go { font-size: 13px; font-weight: 650; color: var(--blue); }
+  .mat-go::after { content: " →"; transition: margin-left 0.2s ease; }
+  .mat-card:hover .mat-go::after { margin-left: 5px; }
 
   footer { text-align: center; padding: 46px 0 54px; font-size: 13px; color: var(--faint); letter-spacing: 0.05em; }
   footer .blue { color: var(--blue); }
@@ -342,6 +369,19 @@
     </section>
     <div class="tb-note" id="syncDetail">正在请求 NowAPI 北京时间校准接口…</div>
 
+    <section class="mats">
+      <a class="mat-card" href="https://1858374084.share.123pan.cn/123pan/CjW7vd-wPbKA" target="_blank" rel="noopener noreferrer">
+        <div class="mat-cover" style="background-image:url('https://1858374084.cdn.123clouddisk.com/1858374084/40170190')"></div>
+        <div class="mat-info"><span class="mat-name">研学素材</span><span class="mat-size">25.98 GB</span></div>
+        <div class="mat-foot"><span class="mat-sub">123 云盘 · 打包下载</span><span class="mat-go">获取</span></div>
+      </a>
+      <a class="mat-card" href="https://1858374084.share.123pan.cn/123pan/CjW7vd-gPbKA" target="_blank" rel="noopener noreferrer">
+        <div class="mat-cover" style="background-image:url('https://1858374084.cdn.123clouddisk.com/1858374084/40170189')"></div>
+        <div class="mat-info"><span class="mat-name">校运会素材</span><span class="mat-size">19.05 GB</span></div>
+        <div class="mat-foot"><span class="mat-sub">123 云盘 · 打包下载</span><span class="mat-go">获取</span></div>
+      </a>
+    </section>
+
     <section class="guestbook">
       <div class="gb-head">
         <div class="gb-title"><span class="tick"></span>留言 · 心愿墙</div>
@@ -352,6 +392,7 @@
         <textarea class="gb-text" id="gbText" maxlength="200" placeholder="写下你的期许或祝福…"></textarea>
         <button class="gb-send" id="gbSend" type="button">送出</button>
       </div>
+      <div class="gb-captcha" id="gbTurnstile"></div>
       <div class="gb-hint" id="gbHint"></div>
       <div class="gb-list" id="gbList"></div>
     </section>
@@ -359,6 +400,7 @@
     <footer>愿所求皆如愿，所行化坦途。<span class="blue">初三加油</span></footer>
   </div>
 
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
 <script>
 (function () {
   'use strict';
@@ -777,6 +819,18 @@
       hintEl.className = 'gb-hint' + (cls ? ' ' + cls : '');
     }
 
+    var TW = null;
+    var CAPTCHA_SITEKEY = '0x4AAAAAAF4n4XWto23l3AIQ';
+    function initCaptcha() {
+      if (!window.turnstile || TW) { if (!window.turnstile) setTimeout(initCaptcha, 250); return; }
+      TW = window.turnstile.render('#gbTurnstile', { sitekey: CAPTCHA_SITEKEY, theme: 'light', size: 'flexible' });
+    }
+    initCaptcha();
+    function captchaToken() {
+      try { return (window.turnstile && TW) ? (window.turnstile.getResponse(TW) || '') : ''; } catch (e) { return ''; }
+    }
+    function captchaReset() { try { if (window.turnstile && TW) window.turnstile.reset(TW); } catch (e) {} }
+
     fetch(API, { cache: 'no-store' }).then(function (r) { return r.json(); }).then(function (d) {
       if (d && d.success) { messages = d.messages || []; render(); }
     }).catch(function () { setHint('留言加载失败，稍后刷新试试', 'err'); });
@@ -784,21 +838,25 @@
     sendEl.addEventListener('click', function () {
       var text = textEl.value.trim();
       if (!text) { setHint('先写点内容吧', 'err'); textEl.focus(); return; }
+      var token = captchaToken();
+      if (!token) { setHint('请先完成人机质询验证', 'err'); return; }
       sendEl.disabled = true;
       setHint('发送中…', '');
       fetch(API, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: nameEl.value.trim(), text: text })
+        body: JSON.stringify({ name: nameEl.value.trim(), text: text, token: token })
       }).then(function (r) { return r.json(); }).then(function (d) {
         if (d && d.success) {
           messages.unshift(d.message);
           render();
           textEl.value = '';
           setHint('留言成功，愿你如愿 ♥', 'ok');
+          captchaReset();
           setTimeout(function () { setHint('', ''); }, 3000);
         } else {
           setHint((d && d.error) || '发送失败', 'err');
+          if (d && d.captcha) captchaReset();
         }
         sendEl.disabled = false;
       }).catch(function () {
