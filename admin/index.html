@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>留言管理 · 木鱼许愿</title>
+<style>
+  :root { --ink:#0f1a33; --muted:#5f6b84; --faint:#8b96ac; --blue:#4d6bfe; --line:rgba(120,140,180,.18); }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif; background:#eef3fc; color:var(--ink); min-height:100vh; padding:44px 16px; -webkit-font-smoothing:antialiased; }
+  .wrap { max-width:720px; margin:0 auto; }
+  .card { background:rgba(255,255,255,.78); border:1px solid rgba(255,255,255,.9); border-radius:18px; padding:24px; box-shadow:0 20px 50px -30px rgba(45,80,170,.35); margin-bottom:16px; backdrop-filter:blur(16px); }
+  h1 { font-size:18px; letter-spacing:.04em; margin-bottom:6px; }
+  .sub { font-size:12.5px; color:var(--faint); }
+  .row { display:flex; gap:10px; margin-top:16px; }
+  input { flex:1; font-family:inherit; font-size:14px; padding:11px 13px; border:1px solid rgba(120,140,180,.25); border-radius:10px; outline:none; background:#fff; }
+  input:focus { border-color:rgba(77,107,254,.55); box-shadow:0 0 0 3px rgba(77,107,254,.12); }
+  button { font-family:inherit; font-size:13.5px; font-weight:600; cursor:pointer; border:none; border-radius:10px; padding:11px 18px; background:var(--blue); color:#fff; transition:opacity .2s; }
+  button.ghost { background:#fff; color:#5f6b84; border:1px solid rgba(120,140,180,.3); }
+  button.danger { background:#e5484d; }
+  button:disabled { opacity:.5; cursor:default; }
+  .msg { margin-top:12px; font-size:12.5px; min-height:16px; }
+  .msg.err { color:#d0483b; } .msg.ok { color:#0c9a6a; }
+  .list { margin-top:8px; }
+  .item { display:flex; gap:12px; align-items:flex-start; padding:14px 0; border-top:1px solid var(--line); }
+  .item .b { flex:1; min-width:0; }
+  .item .n { font-weight:600; font-size:13.5px; }
+  .item .t { font-size:12px; color:var(--faint); margin-left:8px; }
+  .item .x { font-size:14px; color:#3d4046; margin-top:4px; word-break:break-word; white-space:pre-wrap; }
+  .item .del { background:transparent; border:1px solid rgba(229,72,77,.4); color:#e5484d; padding:6px 10px; font-size:12px; border-radius:8px; }
+  .empty { color:var(--faint); font-size:13px; padding:20px 0; text-align:center; }
+  .bar { display:flex; gap:10px; align-items:center; justify-content:space-between; margin-bottom:8px; }
+  .count { font-size:12.5px; color:var(--faint); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <h1>留言管理</h1>
+    <div class="sub">输入管理密码后可删除单条或清空全部留言</div>
+    <div class="row">
+      <input id="pass" type="password" placeholder="管理密码" autocomplete="off">
+      <button id="unlock">解锁</button>
+    </div>
+    <div class="msg" id="hint"></div>
+  </div>
+  <div class="card" id="panel" style="display:none">
+    <div class="bar">
+      <span class="count" id="count">0 条</span>
+      <button class="danger" id="clearAll">清空全部</button>
+    </div>
+    <div class="list" id="list"></div>
+  </div>
+</div>
+<script>
+(function () {
+  var API = 'https://api.csningxiang.com/admin';
+  var pass = '';
+  var $ = function (id) { return document.getElementById(id); };
+  var hint = $('hint'), listEl = $('list'), countEl = $('count'), panel = $('panel');
+
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function timeStr(ts) {
+    var d = new Date(ts);
+    return (d.getMonth() + 1) + '月' + d.getDate() + '日 ' +
+      String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+  }
+  function setHint(m, c) { hint.textContent = m || ''; hint.className = 'msg' + (c ? ' ' + c : ''); }
+
+  function api(body) {
+    return fetch(API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    }).then(function (r) { return r.json(); });
+  }
+
+  function render(msgs) {
+    countEl.textContent = msgs.length + ' 条';
+    if (!msgs.length) { listEl.innerHTML = '<div class="empty">暂无留言</div>'; return; }
+    var html = '';
+    for (var i = 0; i < msgs.length; i++) {
+      var m = msgs[i];
+      html += '<div class="item"><div class="b"><span class="n">' + esc(m.name) + '</span>' +
+        '<span class="t">' + timeStr(m.ts) + '</span>' +
+        '<div class="x">' + esc(m.text) + '</div></div>' +
+        '<button class="del" data-id="' + esc(m.id) + '">删除</button></div>';
+    }
+    listEl.innerHTML = html;
+    Array.prototype.forEach.call(listEl.querySelectorAll('.del'), function (btn) {
+      btn.addEventListener('click', function () {
+        if (!confirm('确定删除这条留言？')) return;
+        btn.disabled = true;
+        api({ pass: pass, action: 'delete', id: btn.getAttribute('data-id') }).then(function (d) {
+          if (d && d.success) { setHint('已删除', 'ok'); load(); }
+          else { setHint((d && d.error) || '删除失败', 'err'); btn.disabled = false; }
+        }).catch(function () { setHint('网络错误', 'err'); btn.disabled = false; });
+      });
+    });
+  }
+
+  function load() {
+    return api({ pass: pass, action: 'list' }).then(function (d) {
+      if (d && d.success) { panel.style.display = 'block'; render(d.messages || []); }
+      else { setHint((d && d.error) || '密码错误', 'err'); }
+    }).catch(function () { setHint('网络错误，稍后再试', 'err'); });
+  }
+
+  $('unlock').addEventListener('click', function () {
+    pass = $('pass').value.trim();
+    if (!pass) { setHint('请输入密码', 'err'); return; }
+    setHint('验证中…', '');
+    load();
+  });
+  $('pass').addEventListener('keydown', function (e) { if (e.key === 'Enter') $('unlock').click(); });
+
+  $('clearAll').addEventListener('click', function () {
+    if (!confirm('确定清空全部留言？此操作不可恢复。')) return;
+    $('clearAll').disabled = true;
+    api({ pass: pass, action: 'clear' }).then(function (d) {
+      if (d && d.success) { setHint('已清空 ' + (d.deleted || 0) + ' 条', 'ok'); load(); }
+      else { setHint((d && d.error) || '操作失败', 'err'); }
+    }).catch(function () { setHint('网络错误', 'err'); }).then(function () { $('clearAll').disabled = false; });
+  });
+})();
+</script>
+</body>
+</html>
