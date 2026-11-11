@@ -3,31 +3,51 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
 <title>留言管理 · 木鱼许愿</title>
 <style>
-  :root { --ink:#0f1a33; --muted:#5f6b84; --faint:#8b96ac; --blue:#4d6bfe; --line:rgba(120,140,180,.18); }
+  :root { --ink:#0f1a33; --muted:#5f6b84; --faint:#8b96ac; --blue:#4d6bfe; --red:#e5484d; --line:rgba(120,140,180,.18); --r-card:18px; --r-ctl:10px; --r-sm:8px; }
   * { margin:0; padding:0; box-sizing:border-box; }
-  body { font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif; background:#eef3fc; color:var(--ink); min-height:100vh; padding:44px 16px; -webkit-font-smoothing:antialiased; }
+  @font-face { font-family:'SmileySans'; src:url('https://1858374084.cdn.123clouddisk.com/1858374084/cdn_url/cbzx717/classtools/SmileySans-Oblique-2.ttf') format('truetype'); font-weight:400 700; font-style:normal; font-display:swap; }
+  body { font-family:'SmileySans',-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif; background:#eef3fc; color:var(--ink); min-height:100vh; padding:44px 16px; -webkit-font-smoothing:antialiased; }
   .wrap { max-width:720px; margin:0 auto; }
-  .card { background:rgba(255,255,255,.78); border:1px solid rgba(255,255,255,.9); border-radius:18px; padding:24px; box-shadow:0 20px 50px -30px rgba(45,80,170,.35); margin-bottom:16px; backdrop-filter:blur(16px); }
+  .card { background:rgba(255,255,255,.78); border:1px solid rgba(255,255,255,.9); border-radius:var(--r-card); padding:24px; box-shadow:0 20px 50px -30px rgba(45,80,170,.35); margin-bottom:16px; backdrop-filter:blur(16px); }
+  @media (prefers-reduced-motion: no-preference) {
+    .card { animation:rise .5s cubic-bezier(.22,1,.36,1) both; }
+    .card:nth-child(2) { animation-delay:.08s; }
+  }
+  @keyframes rise { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:none; } }
   h1 { font-size:18px; letter-spacing:.04em; margin-bottom:6px; }
   .sub { font-size:12.5px; color:var(--faint); }
   .row { display:flex; gap:10px; margin-top:16px; }
-  input { flex:1; font-family:inherit; font-size:14px; padding:11px 13px; border:1px solid rgba(120,140,180,.25); border-radius:10px; outline:none; background:#fff; }
+  .sr { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
+  input { flex:1; min-width:0; font-family:inherit; font-size:14px; padding:12px 14px; min-height:44px; border:1px solid rgba(120,140,180,.25); border-radius:var(--r-ctl); outline:none; background:#fff; transition:border-color .15s, box-shadow .15s; }
   input:focus { border-color:rgba(77,107,254,.55); box-shadow:0 0 0 3px rgba(77,107,254,.12); }
-  button { font-family:inherit; font-size:13.5px; font-weight:600; cursor:pointer; border:none; border-radius:10px; padding:11px 18px; background:var(--blue); color:#fff; transition:opacity .2s; }
-  button.ghost { background:#fff; color:#5f6b84; border:1px solid rgba(120,140,180,.3); }
-  button.danger { background:#e5484d; }
+  button { font-family:inherit; font-size:13.5px; font-weight:600; cursor:pointer; border:none; border-radius:var(--r-ctl); padding:12px 18px; min-height:44px; background:var(--blue); color:#fff; transition:transform .15s, box-shadow .15s, background-color .15s, opacity .2s; }
+  @media (prefers-reduced-motion: no-preference) {
+    button:not(:disabled):hover { transform:translateY(-1px); box-shadow:0 6px 16px -8px rgba(77,107,254,.6); background:#3d5bf5; }
+    button:not(:disabled):active { transform:translateY(0); box-shadow:none; }
+    button.ghost:not(:disabled):hover { background:#f6f9ff; color:var(--ink); border-color:rgba(77,107,254,.4); }
+    button.danger:not(:disabled):hover { background:#d13b40; box-shadow:0 6px 16px -8px rgba(229,72,77,.6); }
+  }
+  button.ghost { background:#fff; color:var(--muted); border:1px solid rgba(120,140,180,.3); }
+  button.danger { background:var(--red); }
   button:disabled { opacity:.5; cursor:default; }
+  :where(button,input,a):focus-visible { outline:3px solid rgba(77,107,254,.4); outline-offset:2px; }
   .msg { margin-top:12px; font-size:12.5px; min-height:16px; }
   .msg.err { color:#d0483b; } .msg.ok { color:#0c9a6a; }
   .list { margin-top:8px; }
-  .item { display:flex; gap:12px; align-items:flex-start; padding:14px 0; border-top:1px solid var(--line); }
+  .item { display:flex; gap:12px; align-items:flex-start; padding:14px 10px; margin:0 -10px; border-top:1px solid var(--line); border-radius:var(--r-sm); transition:background-color .15s; }
+  .item:hover { background:rgba(77,107,254,.05); }
   .item .b { flex:1; min-width:0; }
   .item .n { font-weight:600; font-size:13.5px; }
   .item .t { font-size:12px; color:var(--faint); margin-left:8px; }
   .item .x { font-size:14px; color:#3d4046; margin-top:4px; word-break:break-word; white-space:pre-wrap; }
-  .item .del { background:transparent; border:1px solid rgba(229,72,77,.4); color:#e5484d; padding:6px 10px; font-size:12px; border-radius:8px; }
+  .item .del { background:transparent; border:1px solid rgba(229,72,77,.4); color:var(--red); padding:8px 12px; min-height:36px; font-size:12px; border-radius:var(--r-sm); transition:background-color .15s, border-color .15s, transform .15s; }
+  @media (prefers-reduced-motion: no-preference) {
+    .item .del:not(:disabled):hover { background:rgba(229,72,77,.1); border-color:var(--red); transform:translateY(-1px); }
+    .item .del:not(:disabled):active { transform:translateY(0); }
+  }
   .empty { color:var(--faint); font-size:13px; padding:20px 0; text-align:center; }
   .bar { display:flex; gap:10px; align-items:center; justify-content:space-between; margin-bottom:8px; }
   .count { font-size:12.5px; color:var(--faint); }
@@ -39,10 +59,11 @@
     <h1>留言管理</h1>
     <div class="sub">输入管理密码后可删除单条或清空全部留言</div>
     <div class="row">
+      <label class="sr" for="pass">管理密码</label>
       <input id="pass" type="password" placeholder="管理密码" autocomplete="off">
       <button id="unlock">解锁</button>
     </div>
-    <div class="msg" id="hint"></div>
+    <div class="msg" id="hint" role="status" aria-live="polite"></div>
   </div>
   <div class="card" id="panel" style="display:none">
     <div class="bar">
@@ -61,7 +82,7 @@
 
   function esc(s) {
     return String(s).replace(/[&<>"']/g, function (c) {
-      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+      return '&#' + c.charCodeAt(0) + ';';
     });
   }
   function timeStr(ts) {
